@@ -102,10 +102,10 @@ export default function PredictModal({ onClose, data, onApply }) {
     : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 pb-16">
 
       {/* MODAL */}
-      <div className="bg-white w-full max-w-md rounded-xl max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-md rounded-xl max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* HEADER */}
         <div className="p-4 border-b flex justify-between items-center">
@@ -131,7 +131,7 @@ export default function PredictModal({ onClose, data, onApply }) {
         </div>
 
         {/* BODY */}
-        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+        <div className="p-4 overflow-y-auto flex-1 space-y-4 pb-24">
 
           {/* CALENDAR */}
           <div className="grid grid-cols-7 gap-2 text-center text-xs">
@@ -229,8 +229,8 @@ export default function PredictModal({ onClose, data, onApply }) {
 
         </div>
 
-        {/* FOOTER (SAFE AREA FIX) */}
-        <div className="p-4 border-t flex gap-2 pb-6">
+        {/* FOOTER */}
+        <div className="p-4 border-t flex gap-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <button
             onClick={() => {
               onApply(result);
