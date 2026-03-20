@@ -105,19 +105,15 @@ export default function Marks() {
             <Card key={i}>
 
               {/* 🔥 Wrap content to position predictor */}
-              <div className="relative">
+              <div className="flex justify-between items-start gap-2">
 
-                {/* 🚀 Predict Button (top-right) */}
-                <div className="absolute top-0 right-0">
-                  <GradePredictor tests={m.tests} />
-                </div>
+              {/* LEFT: Title + Code */}
+              <div className="flex-1 min-w-0">
 
-                {/* Subject Title */}
-                <SectionTitle>
+                <SectionTitle className="break-words">
                   {displayTitle}
                 </SectionTitle>
 
-                {/* Code */}
                 {!isSame && code && (
                   <p className="text-xs md:text-sm text-gray-500">
                     {code}
@@ -125,6 +121,13 @@ export default function Marks() {
                 )}
 
               </div>
+
+              {/* RIGHT: Predictor */}
+              <div className="shrink-0">
+                <GradePredictor tests={m.tests} />
+              </div>
+
+            </div>
 
               {/* Tests */}
               <div className="mt-3 space-y-2 text-xs md:text-sm">
