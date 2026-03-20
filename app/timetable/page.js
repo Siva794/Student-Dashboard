@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { getData } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 
 import timetableData from "@/data/timetable.json";
+import plannerData from "@/data/planner.json";
 
 import Card from "@/components/ui/Card";
 import SectionTitle from "@/components/ui/SectionTitle";
 
-// =========================
-// 🎨 Subject Color Generator
-// =========================
+// 🎨 Subject Color
 function getColor(code = "") {
   const colors = [
     "bg-blue-100 border-blue-300",
@@ -31,27 +30,67 @@ function getColor(code = "") {
   return colors[Math.abs(hash) % colors.length];
 }
 
-// =========================
-// ⏱ Fake Current Period (you can improve later)
-// =========================
+// ⏰ Period timings
+const PERIOD_TIMINGS = [
+  { name: "P1", start: "08:00", end: "08:50" },
+  { name: "P2", start: "08:50", end: "09:40" },
+  { name: "P3", start: "09:45", end: "10:35" },
+  { name: "P4", start: "10:40", end: "11:30" },
+  { name: "P5", start: "11:35", end: "12:25" },
+  { name: "P6", start: "12:30", end: "13:20" },
+  { name: "P7", start: "13:25", end: "14:15" },
+  { name: "P8", start: "14:20", end: "15:10" },
+  { name: "P9", start: "15:10", end: "16:00" },
+  { name: "P10", start: "16:00", end: "16:50" },
+  { name: "P11", start: "16:50", end: "17:40" },
+  { name: "P12", start: "17:40", end: "18:30" },
+];
+
+// ⏱ Current period
 function getCurrentPeriod() {
-  const hour = new Date().getHours();
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
 
-  if (hour < 9) return "P1";
-  if (hour < 10) return "P2";
-  if (hour < 11) return "P3";
-  if (hour < 12) return "P4";
-  if (hour < 13) return "P5";
-  if (hour < 14) return "P6";
-  if (hour < 15) return "P7";
-  if (hour < 16) return "P8";
+  let last = null;
 
+  for (let p of PERIOD_TIMINGS) {
+    const [sh, sm] = p.start.split(":").map(Number);
+    const [eh, em] = p.end.split(":").map(Number);
+
+    const start = sh * 60 + sm;
+    const end = eh * 60 + em;
+
+    if (minutes >= start && minutes < end) return p.name;
+    if (minutes >= end) last = p.name;
+  }
+
+  return last;
+}
+
+// 📅 Date
+function getTodayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(
+    t.getDate()
+  ).padStart(2, "0")}`;
+}
+
+// 📅 Day Order
+function getTodayDayOrder(yearData, todayStr) {
+  for (const month of Object.values(yearData)) {
+    for (const d of month) {
+      if (d.date === todayStr) return d.dayOrder || null;
+    }
+  }
   return null;
 }
 
 export default function Timetable() {
   const router = useRouter();
   const { data, setData } = useAppStore();
+  const todayRef = useRef(null);
+
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
 
   useEffect(() => {
     if (!data) {
@@ -61,49 +100,80 @@ export default function Timetable() {
     }
   }, [data, setData, router]);
 
-  const subjects = data?.subjects || [];
-  const batch = data?.batch || "1";
-
   if (!data) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
         Loading timetable...
       </div>
     );
   }
+
+  const subjects = data?.subjects || [];
+  const batch = data?.batch || "1";
 
   const timetable =
     batch === "1"
       ? timetableData.batch1
       : timetableData.batch2;
 
+  const yearData = plannerData["2026"] || {};
+
+  const todayStr = getTodayStr();
+  const todayOrder = getTodayDayOrder(yearData, todayStr);
+  const todayKey = todayOrder ? `Day${todayOrder}` : null;
+
   const currentPeriod = getCurrentPeriod();
 
-  // =========================
-  // 🧠 Slot → Subject mapping
-  // =========================
+  const days = Object.entries(timetable);
+
+  // Auto select today
+  useEffect(() => {
+    if (todayKey) {
+      const index = days.findIndex(([d]) => d === todayKey);
+      if (index !== -1) setActiveDayIndex(index);
+    }
+  }, [todayKey]);
+
+  // 🔍 Find subject
   const findSubject = (slotValue) => {
     if (!slotValue) return null;
 
-    const possibleSlots = slotValue
-      .split("/")
-      .map((s) => s.trim());
+    const possible = slotValue.split("/").map((s) => s.trim());
 
     if (slotValue.startsWith("P")) {
       return subjects.find((s) => s.slot === "LAB");
     }
 
-    return subjects.find((sub) =>
-      possibleSlots.includes(sub.slot)
+    return subjects.find((s) =>
+      possible.includes(s.slot)
     );
   };
 
-  return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+  // 👆 Swipe
+  let touchStartX = 0;
 
-      {/* 🔥 Header */}
+  const handleTouchStart = (e) => {
+    touchStartX = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+
+    if (diff > 50 && activeDayIndex < days.length - 1) {
+      setActiveDayIndex((p) => p + 1);
+    }
+
+    if (diff < -50 && activeDayIndex > 0) {
+      setActiveDayIndex((p) => p - 1);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
+
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-xl md:text-2xl font-bold">
           Day Order Timetable
         </h1>
         <p className="text-sm text-gray-500">
@@ -111,83 +181,165 @@ export default function Timetable() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      {!todayKey ? (
+        <Card>
+          <p className="text-gray-500">
+            No classes today 🎉
+          </p>
+        </Card>
+      ) : (
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
 
-        {Object.entries(timetable).map(([day, periods]) => (
-          <Card key={day}>
+          {/* 📱 MOBILE */}
+          <div className="md:hidden space-y-4">
 
-            {/* Day Title */}
-            <SectionTitle>
-              {day}
-            </SectionTitle>
-
-            {/* Period Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-
-              {Object.entries(periods).map(([period, value]) => {
-                const subject = findSubject(value);
-                const isCurrent = period === currentPeriod;
-
-                // 🎨 Decide style
-                let style =
-                  "bg-gray-100 border-gray-200";
-
-                if (subject) {
-                  style = getColor(subject.course_code);
-                }
-
-                if (!subject) {
-                  style = "bg-gray-50 border-gray-200";
-                }
+            {/* Day Buttons */}
+            <div className="flex justify-center gap-2">
+              {days.map(([day], idx) => {
+                const isActive = idx === activeDayIndex;
+                const isToday = day === todayKey;
 
                 return (
-                  <div
-                    key={period}
-                    className={`border rounded-xl p-3 transition-all duration-200
-                      ${style}
-                      ${isCurrent ? "ring-2 ring-black scale-[1.02]" : ""}
+                  <button
+                    key={day}
+                    onClick={() => setActiveDayIndex(idx)}
+                    className={`
+                      w-9 h-9 rounded-lg text-sm font-semibold
+                      flex items-center justify-center transition
+                      ${isActive
+                        ? "bg-black text-white"
+                        : "bg-white border text-gray-600"}
+                      ${isToday ? "ring-2 ring-yellow-400" : ""}
                     `}
                   >
-                    {/* Period */}
-                    <p className="text-xs text-gray-500">
-                      {period}
-                    </p>
-
-                    {/* Subject */}
-                    <p className="text-sm font-semibold mt-1">
-                      {subject
-                        ? subject.course_title
-                        : "Free"}
-                    </p>
-
-                    {/* Faculty + Room */}
-                    {subject && (
-                      <p className="text-xs text-gray-600 mt-1">
-                        {subject.faculty_name || "N/A"} •{" "}
-                        {subject.room_no || "N/A"}
-                      </p>
-                    )}
-
-                    {/* Code */}
-                    {subject && (
-                      <p className="text-[10px] text-gray-500 mt-1">
-                        {subject.course_code}
-                      </p>
-                    )}
-
-                    {/* Slot */}
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      {value}
-                    </p>
-                  </div>
+                    {idx + 1}
+                  </button>
                 );
               })}
             </div>
 
-          </Card>
-        ))}
+            {/* Day Content */}
+            {(() => {
+              const [day, periods] = days[activeDayIndex];
+              const isToday = day === todayKey;
 
-      </div>
+              return (
+                <Card className={isToday ? "ring-2 ring-yellow-400" : ""}>
+
+                  <SectionTitle>
+                    {day} {isToday && "🔥"}
+                  </SectionTitle>
+
+                  <div className="space-y-3">
+
+                    {Object.entries(periods).map(([period, value]) => {
+                      const subject = findSubject(value);
+                      const isCurrent =
+                        isToday && period === currentPeriod;
+
+                      let style = "bg-gray-50 border-gray-200";
+                      if (subject) {
+                        style = getColor(subject.course_code);
+                      }
+
+                      const timing = PERIOD_TIMINGS.find(
+                        (p) => p.name === period
+                      );
+
+                      return (
+                        <div
+                          key={period}
+                          className={`border rounded-xl p-3 ${style} ${
+                            isCurrent
+                              ? "ring-2 ring-black shadow-lg"
+                              : ""
+                          }`}
+                        >
+                          {timing && (
+                            <p className="text-xs text-gray-500">
+                              {timing.start} - {timing.end}
+                            </p>
+                          )}
+
+                          <p className="text-sm font-semibold">
+                            {subject
+                              ? subject.course_title
+                              : "Free"}
+                          </p>
+
+                          {subject && (
+                            <p className="text-xs text-gray-600">
+                              {subject.faculty_name} • {subject.room_no}
+                            </p>
+                          )}
+
+                          {isCurrent && (
+                            <span className="inline-block mt-2 text-xs font-bold bg-black text-white px-2 py-1 rounded">
+                              NOW
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                  </div>
+
+                  <p className="text-center text-xs text-gray-500 mt-4">
+                    Swipe ← → to change day
+                  </p>
+
+                </Card>
+              );
+            })()}
+
+          </div>
+
+          {/* 💻 DESKTOP (UNCHANGED) */}
+          <div className="hidden md:block space-y-6">
+            {days.map(([day, periods]) => {
+              const isToday = day === todayKey;
+
+              return (
+                <Card key={day} className={isToday ? "ring-2 ring-yellow-400" : ""}>
+                  <SectionTitle>
+                    {day} {isToday && "🔥"}
+                  </SectionTitle>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+
+                    {Object.entries(periods).map(([period, value]) => {
+                      const subject = findSubject(value);
+
+                      let style = "bg-gray-50 border-gray-200";
+                      if (subject) {
+                        style = getColor(subject.course_code);
+                      }
+
+                      return (
+                        <div
+                          key={period}
+                          className={`border rounded-xl p-4 ${style}`}
+                        >
+                          <p className="font-semibold">
+                            {subject
+                              ? subject.course_title
+                              : "Free"}
+                          </p>
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }

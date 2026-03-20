@@ -25,16 +25,16 @@ export default function Attendance() {
 
   if (!data) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-4 md:p-6 min-h-screen bg-gray-100">
         Loading attendance...
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
 
-      <h1 className="text-2xl font-bold mb-4">
+      <h1 className="text-xl md:text-2xl font-bold mb-4">
         Attendance Overview
       </h1>
 
@@ -44,7 +44,8 @@ export default function Attendance() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {attendance.map((c, i) => {
           const total = c.total || 0;
@@ -52,7 +53,7 @@ export default function Attendance() {
           const present = total - absent;
           const percentage = c.percentage || 0;
 
-          // 🔴 REQUIRED
+          // REQUIRED
           let required = 0;
           try {
             required = Math.ceil((0.75 * total - present) / 0.75);
@@ -61,7 +62,7 @@ export default function Attendance() {
           }
           if (required < 0) required = 0;
 
-          // 🟢 MARGIN
+          // MARGIN
           let margin = 0;
           try {
             margin = Math.floor((present - 0.75 * total) / 0.75);
@@ -70,7 +71,7 @@ export default function Attendance() {
           }
           if (margin < 0) margin = 0;
 
-          // 🚦 Status
+          // STATUS
           let status = "Safe";
           let type = "safe";
 
@@ -86,17 +87,17 @@ export default function Attendance() {
             <Card key={i}>
 
               {/* Title */}
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-base md:text-lg font-semibold">
                 {c.course_title || "Unknown"}
               </h2>
 
               {/* Sub info */}
-              <p className="text-sm text-gray-500">
+              <p className="text-xs md:text-sm text-gray-500">
                 {c.code || "N/A"} • {c.category || "N/A"}
               </p>
 
               {/* Stats */}
-              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:text-sm">
 
                 <p>
                   <span className="text-gray-500">Conducted:</span>{" "}
@@ -113,26 +114,29 @@ export default function Attendance() {
                   {percentage}%
                 </p>
 
-                {/* 🔥 Required / Margin */}
-                {percentage < 75 ? (
-                  <p className="text-red-600 font-medium">
-                    Required: {required}
-                  </p>
-                ) : (
-                  <p className="text-green-600 font-medium">
-                    Margin: {margin}
-                  </p>
-                )}
+                {/* ✅ Present */}
+                <p>
+                  <span className="text-gray-500">Present:</span>{" "}
+                  {present}
+                </p>
 
               </div>
 
               {/* Footer */}
               <div className="mt-4 flex justify-between items-center">
 
-                <div className="text-sm text-gray-500">
-                  Present: {present}
-                </div>
+                {/* ✅ Margin / Required (Highlighted) */}
+                {percentage < 75 ? (
+                  <div className="text-red-600 font-bold text-sm md:text-base">
+                    Required: {required}
+                  </div>
+                ) : (
+                  <div className="text-green-600 font-bold text-sm md:text-base">
+                    Margin: {margin}
+                  </div>
+                )}
 
+                {/* Status Badge */}
                 <Badge text={status} type={type} />
 
               </div>

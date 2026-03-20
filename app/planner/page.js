@@ -1,105 +1,175 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import plannerData from "@/data/planner.json";
 
-// UI
 import Card from "@/components/ui/Card";
 import SectionTitle from "@/components/ui/SectionTitle";
 
 export default function Planner() {
-  const yearData = plannerData["2026"];
-
+  const yearData = plannerData["2026"] || {};
   const months = Object.keys(yearData);
 
-  const [selectedMonth, setSelectedMonth] = useState(months[0]);
+  const today = new Date();
+
+  const currentMonthName = today.toLocaleString("default", {
+    month: "long",
+  });
+
+  const initialMonth = months.includes(currentMonthName)
+    ? currentMonthName
+    : months[0];
+
+  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
 
   const days = yearData[selectedMonth] || [];
 
+  const todayStr = today.toISOString().split("T")[0];
+
+  const todayRef = useRef(null);
+
+  useEffect(() => {
+    if (todayRef.current) {
+      todayRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [selectedMonth]);
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
 
       {/* Header */}
-      <h1 className="text-2xl font-bold mb-4">
+      <h1 className="text-xl md:text-2xl font-bold mb-4">
         Academic Planner 2026
       </h1>
 
+      {/* ✅ Legend (clean pills) */}
+      <div className="flex flex-wrap gap-2 text-xs mb-4">
+        <span className="px-2 py-1 rounded-full bg-red-100 text-red-600">
+          Holiday
+        </span>
+        <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-600">
+          Event
+        </span>
+        <span className="px-2 py-1 rounded-full bg-green-100 text-green-600">
+          Day Order
+        </span>
+        <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+          Today
+        </span>
+      </div>
+
       {/* Month Selector */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
+
         {months.map((month) => (
           <button
             key={month}
             onClick={() => setSelectedMonth(month)}
-            className={`px-3 py-1 rounded border ${
-              selectedMonth === month
-                ? "bg-blue-500 text-white"
-                : "bg-white"
-            }`}
+            className={`
+              px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition
+              ${
+                selectedMonth === month
+                  ? "bg-black text-white"
+                  : "bg-white border text-gray-600"
+              }
+            `}
           >
             {month}
           </button>
         ))}
+
       </div>
 
-      {/* Month View */}
+      {/* Calendar */}
       <Card>
         <SectionTitle>{selectedMonth}</SectionTitle>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {days.length === 0 ? (
+          <p className="text-gray-500">No data available</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
 
-          {days.map((d, i) => {
-            const isHoliday = !!d.holiday;
-            const isEvent = !!d.event;
+            {days.map((d) => {
+              const isHoliday = !!d.holiday;
+              const isEvent = !!d.event;
 
-            let bg = "bg-white";
+              const dateObj = new Date(d.date);
+              const dayNumber = dateObj.getDate();
 
-            if (isHoliday) bg = "bg-red-100";
-            else if (isEvent) bg = "bg-blue-100";
-            else if (d.dayOrder) bg = "bg-green-50";
+              const isToday = d.date === todayStr;
 
-            return (
-              <div
-                key={i}
-                className={`p-3 rounded border text-sm ${bg}`}
-              >
-                {/* Date */}
-                <div className="font-semibold">
-                  {d.date.split("-")[2]}
+              let bg = "bg-white";
+
+              if (isHoliday) bg = "bg-red-100";
+              else if (isEvent) bg = "bg-blue-100";
+              else if (d.dayOrder) bg = "bg-green-50";
+
+              return (
+                <div
+                  key={d.date}
+                  ref={isToday ? todayRef : null}
+                  className={`
+                    p-3 rounded-xl border text-sm transition
+                    ${bg}
+                    ${
+                      isToday
+                        ? "ring-2 ring-black bg-yellow-100 shadow-md"
+                        : ""
+                    }
+                  `}
+                >
+
+                  {/* Top Row */}
+                  <div className="flex justify-between items-center">
+
+                    <span className="font-semibold text-base">
+                      {dayNumber}
+                    </span>
+
+                    <span className="text-[10px] text-gray-500">
+                      {d.day}
+                    </span>
+
+                  </div>
+
+                  {/* Day Order */}
+                  {d.dayOrder && (
+                    <div className="mt-1 text-green-700 font-medium text-xs">
+                      Day {d.dayOrder}
+                    </div>
+                  )}
+
+                  {/* Holiday */}
+                  {d.holiday && (
+                    <div className="mt-1 text-red-600 text-xs line-clamp-2">
+                      {d.holiday}
+                    </div>
+                  )}
+
+                  {/* Event */}
+                  {d.event && (
+                    <div className="mt-1 text-blue-600 text-xs line-clamp-2">
+                      {d.event}
+                    </div>
+                  )}
+
+                  {/* Today Badge */}
+                  {isToday && (
+                    <div className="mt-2 inline-block text-[10px] font-bold bg-black text-white px-2 py-0.5 rounded">
+                      TODAY
+                    </div>
+                  )}
+
                 </div>
+              );
+            })}
 
-                {/* Day */}
-                <div className="text-xs text-gray-500">
-                  {d.day}
-                </div>
-
-                {/* Day Order */}
-                {d.dayOrder && (
-                  <div className="mt-1 text-green-700 font-medium">
-                    Day {d.dayOrder}
-                  </div>
-                )}
-
-                {/* Holiday */}
-                {d.holiday && (
-                  <div className="mt-1 text-red-600 text-xs">
-                    {d.holiday}
-                  </div>
-                )}
-
-                {/* Event */}
-                {d.event && (
-                  <div className="mt-1 text-blue-600 text-xs">
-                    {d.event}
-                  </div>
-                )}
-
-              </div>
-            );
-          })}
-
-        </div>
+          </div>
+        )}
       </Card>
-
     </div>
   );
 }

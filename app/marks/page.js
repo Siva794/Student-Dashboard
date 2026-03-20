@@ -21,24 +21,54 @@ export default function Marks() {
     }
   }, [data, setData, router]);
 
+  // ✅ Smart formatter
+  const formatNumber = (num) => {
+    const n = Number(num) || 0;
+    return Number.isInteger(n) ? n : n.toFixed(1);
+  };
+
   // ✅ Filter only theory subjects
-  const marks = (data?.marks || []).filter(
-    (m) => m?.course_type !== "Practical"
-  );
+  const allMarks = data?.marks || [];
+
+  const marksMap = {};
+
+  // Group by subject (use code as key)
+  allMarks.forEach((m) => {
+    const key = m.code || m.course_title;
+
+    if (!marksMap[key]) {
+      marksMap[key] = [];
+    }
+
+    marksMap[key].push(m);
+  });
+
+  // Apply logic
+  const marks = Object.values(marksMap).map((group) => {
+    const theory = group.find(
+      (g) => g.course_type !== "Practical"
+    );
+
+    // If theory exists → use it
+    if (theory) return theory;
+
+    // Else → return practical
+    return group[0];
+  });
 
   if (!data) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-4 md:p-6 min-h-screen bg-gray-100">
         Loading marks...
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-100 min-h-screen">
 
       {/* Header */}
-      <h1 className="text-2xl font-bold mb-4">
+      <h1 className="text-xl md:text-2xl font-bold mb-4">
         Marks Overview
       </h1>
 
@@ -48,7 +78,7 @@ export default function Marks() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {marks.map((m, i) => {
 
@@ -63,24 +93,24 @@ export default function Marks() {
 
           const percent =
             totalMax > 0
-              ? ((totalObtained / totalMax) * 100).toFixed(2)
-              : "0";
+              ? formatNumber((totalObtained / totalMax) * 100)
+              : 0;
 
           return (
             <Card key={i}>
 
-              {/* 🔥 Subject Title */}
+              {/* Subject Title */}
               <SectionTitle>
                 {m.course_title || "Unknown Subject"}
               </SectionTitle>
 
-              {/* 🔥 Code */}
-              <p className="text-sm text-gray-500">
+              {/* Code */}
+              <p className="text-xs md:text-sm text-gray-500">
                 {m.code || "N/A"}
               </p>
 
-              {/* 📊 Tests */}
-              <div className="mt-3 space-y-2 text-sm">
+              {/* Tests */}
+              <div className="mt-3 space-y-2 text-xs md:text-sm">
 
                 {(m.tests || []).length === 0 && (
                   <p className="text-gray-400">
@@ -98,23 +128,25 @@ export default function Marks() {
                     </span>
 
                     <span>
-                      {t.obtained}/{t.max}
+                      {formatNumber(t.obtained)} /{" "}
+                      {formatNumber(t.max)}
                     </span>
                   </div>
                 ))}
 
               </div>
 
-              {/* 🔥 Total Section */}
+              {/* Total Section */}
               <div className="mt-4 pt-3 border-t text-center">
 
-                {/* BIG TOTAL */}
-                <div className="text-2xl font-bold">
-                  {totalObtained} / {totalMax}
+                {/* Total */}
+                <div className="text-xl md:text-2xl font-bold">
+                  {formatNumber(totalObtained)} /{" "}
+                  {formatNumber(totalMax)}
                 </div>
 
-                {/* SMALL OVERALL */}
-                <div className="text-sm text-gray-500 mt-1">
+                {/* Percentage */}
+                <div className="text-sm md:text-base font-semibold text-blue-600 mt-1">
                   Overall: {percent}%
                 </div>
 

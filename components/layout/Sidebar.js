@@ -10,10 +10,13 @@ import {
   saveSession,
   getSession,
 } from "@/lib/storage";
+import { useState, useEffect } from "react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [open, setOpen] = useState(false);
 
   const {
     setData,
@@ -33,10 +36,23 @@ export default function Sidebar() {
     { name: "Planner", href: "/planner" },
   ];
 
-  // 🔄 REFRESH (FIXED)
+  // Open from header
+  useEffect(() => {
+    const openSidebar = () => setOpen(true);
+    document.addEventListener("toggle-sidebar", openSidebar);
+    return () => {
+      document.removeEventListener("toggle-sidebar", openSidebar);
+    };
+  }, []);
+
+  // Close on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Refresh
   const handleRefresh = async () => {
     try {
-      // ❌ if credentials missing → force login
       if (!credentials?.email || !credentials?.password) {
         alert("Session expired. Please login again.");
         clearAll();
@@ -55,52 +71,35 @@ export default function Sidebar() {
         session
       );
 
-      // ❌ API failed
       if (!raw || raw.status !== "success") {
         throw new Error("Refresh failed");
       }
 
       const normalized = normalizeData(raw);
 
-      if (!normalized) {
-        throw new Error("Data normalization failed");
-      }
-
-      // ✅ Update store
       setData(normalized);
       setSession(raw.session_data || {});
-
-      // ✅ Persist
       saveSession(raw.session_data || {});
       saveData(normalized);
 
-      // ✅ Force UI refresh (important)
       router.refresh();
-
-    } catch (err) {
-      console.error("Refresh error:", err);
-
-      alert("Session expired or API failed. Please login again.");
-
-      // 🔥 fallback reset
+    } catch {
+      alert("Session expired. Please login again.");
       clearAll();
       localStorage.clear();
       router.replace("/");
-
     } finally {
       setLoading(false);
     }
   };
 
-  // 🚪 LOGOUT
+  // Logout
   const handleLogout = async () => {
     try {
       await fetch("https://rev-api-yoxt.onrender.com/logout", {
         method: "POST",
       });
-    } catch {
-      console.warn("Logout API failed");
-    }
+    } catch {}
 
     clearAll();
     localStorage.clear();
@@ -108,51 +107,96 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-60 h-screen bg-white border-r p-4 flex flex-col">
+    <>
+      {/* Overlay */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+        />
+      )}
 
-      {/* Title */}
-      <h2 className="text-xl font-bold mb-6">
-        Student Portal
-      </h2>
+      {/* Sidebar */}
+      <div
+        className={`
+          fixed md:static top-0 left-0 h-full w-64 bg-white border-r
+          flex flex-col z-50
+          transform transition-transform duration-300
+          ${open ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0
+        `}
+      >
+        {/* Header */}
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-bold tracking-tight">
+            Student Portal
+          </h2>
+          <p className="text-xs text-gray-500">
+            Navigation
+          </p>
+        </div>
 
-      {/* Navigation */}
-      <div className="flex flex-col gap-2 flex-1">
-        {links.map((link) => {
-          const active = pathname === link.href;
+        {/* Links */}
+        <div className="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
 
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`p-2 rounded transition ${
-                active
-                  ? "bg-blue-500 text-white"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              {link.name}
-            </Link>
-          );
-        })}
+          {links.map((link) => {
+            const active = pathname === link.href;
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`
+                  flex items-center justify-between
+                  px-3 py-2 rounded-lg text-sm font-medium
+                  transition-all
+                  ${
+                    active
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }
+                `}
+              >
+                {link.name}
+
+                {active && (
+                  <span className="text-xs">●</span>
+                )}
+              </Link>
+            );
+          })}
+
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-3 border-t space-y-2">
+
+          {/* Refresh */}
+          <button
+            onClick={() => {
+              setOpen(false);
+              handleRefresh();
+            }}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-green-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition disabled:opacity-50"
+          >
+            {loading ? "Refreshing..." : "🔄 Refresh"}
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={() => {
+              setOpen(false);
+              handleLogout();
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-red-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition"
+          >
+            🚪 Logout
+          </button>
+
+        </div>
       </div>
-
-      {/* 🔄 Refresh */}
-      <button
-        onClick={handleRefresh}
-        disabled={loading}
-        className="mt-2 bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:opacity-50"
-      >
-        {loading ? "Refreshing..." : "🔄 Refresh"}
-      </button>
-
-      {/* 🚪 Logout */}
-      <button
-        onClick={handleLogout}
-        className="mt-2 bg-red-500 text-white p-2 rounded hover:bg-red-600"
-      >
-        🚪 Logout
-      </button>
-
-    </div>
+    </>
   );
 }

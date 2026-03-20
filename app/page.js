@@ -27,9 +27,8 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [checking, setChecking] = useState(true); // ✅ IMPORTANT
+  const [checking, setChecking] = useState(true);
 
-  // ✅ PROPER AUTH CHECK
   useEffect(() => {
     const savedData = getData();
     const session = getSession();
@@ -38,12 +37,11 @@ export default function LoginPage() {
       setData(savedData);
       setSession(session);
 
-      // delay ensures hydration safety
       setTimeout(() => {
         router.replace("/dashboard");
       }, 100);
     } else {
-      setChecking(false); // allow login UI
+      setChecking(false);
     }
   }, [setData, setSession, router]);
 
@@ -67,11 +65,6 @@ export default function LoginPage() {
 
       const normalized = normalizeData(raw);
 
-      if (!normalized) {
-        throw new Error("Data processing failed");
-      }
-
-      // ✅ Store everything
       setData(normalized);
       setSession(raw.session_data || {});
       setCredentials({ email: email.trim(), password });
@@ -80,9 +73,7 @@ export default function LoginPage() {
       saveData(normalized);
 
       router.replace("/dashboard");
-
     } catch (err) {
-      console.error(err);
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
@@ -95,58 +86,62 @@ export default function LoginPage() {
     }
   };
 
-  // ⛔ WAIT UNTIL CHECK COMPLETE
   if (checking) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         Checking session...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4 bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
 
-      <h1 className="text-3xl font-bold">
-        Student Portal
-      </h1>
+      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4">
 
-      <input
-        className="border p-2 w-72 rounded"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (error) setError(null);
-        }}
-        onKeyDown={handleKeyDown}
-      />
+        <h1 className="text-2xl md:text-3xl font-bold text-center">
+          Student Portal
+        </h1>
 
-      <input
-        className="border p-2 w-72 rounded"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          if (error) setError(null);
-        }}
-        onKeyDown={handleKeyDown}
-      />
+        <input
+          className="border p-2 w-full rounded"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (error) setError(null);
+          }}
+          onKeyDown={handleKeyDown}
+        />
 
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        className="bg-blue-500 text-white px-4 py-2 w-72 rounded disabled:opacity-50"
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
+        <input
+          className="border p-2 w-full rounded"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (error) setError(null);
+          }}
+          onKeyDown={handleKeyDown}
+        />
 
-      {error && (
-        <p className="text-red-500 text-sm text-center max-w-xs">
-          {error}
-        </p>
-      )}
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="bg-blue-500 text-white py-2 rounded w-full disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center">
+            {error}
+          </p>
+        )}
+
+      </div>
+
     </div>
   );
 }
