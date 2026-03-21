@@ -146,7 +146,7 @@ export default function PredictModal({ onClose, data, onApply }) {
         </div>
 
         {/* Modal */}
-        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden max-h-[75vh]">
+        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden max-h-[70vh]">
 
           {/* Header */}
           <div className="px-3 py-2 border-b flex justify-between items-center text-sm">
