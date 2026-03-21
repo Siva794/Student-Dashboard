@@ -69,17 +69,20 @@ export default function Attendance() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
         {displayAttendance.map((c) => {
+          const original = attendance.find((a) => a.id === c.id);
+
           const total = c.total || 0;
           const absent = c.absent || 0;
           const present = total - absent;
-          const percentage = Number(c.percentage) || 0;
 
-          const original = attendance.find((a) => a.id === c.id);
+          const percentage = Number((c.percentage || 0).toFixed(1));
+          const oldPercentage = Number(
+            ((original?.percentage ?? percentage) || 0).toFixed(1)
+          );
 
           const oldTotal = original?.total ?? total;
           const oldAbsent = original?.absent ?? absent;
           const oldPresent = oldTotal - oldAbsent;
-          const oldPercentage = original?.percentage ?? percentage;
 
           const MIN = 75;
 
@@ -111,7 +114,6 @@ export default function Attendance() {
             )
           );
 
-          // helpers
           const getColor = (newVal, oldVal, reverse = false) => {
             if (!predictedData || newVal === oldVal) return "";
             const improved = reverse ? newVal < oldVal : newVal > oldVal;
@@ -179,7 +181,7 @@ export default function Attendance() {
                   {predictedData ? (
                     <>
                       {oldTotal} →{" "}
-                      <span className={getColor(total, oldTotal)}>
+                      <span className={`${getColor(total, oldTotal)} whitespace-nowrap`}>
                         {total} {getArrow(total, oldTotal)}
                       </span>
                     </>
@@ -191,7 +193,7 @@ export default function Attendance() {
                   {predictedData ? (
                     <>
                       {oldAbsent} →{" "}
-                      <span className={getColor(absent, oldAbsent, true)}>
+                      <span className={`${getColor(absent, oldAbsent, true)} whitespace-nowrap`}>
                         {absent} {getArrow(absent, oldAbsent, true)}
                       </span>
                     </>
@@ -203,7 +205,7 @@ export default function Attendance() {
                   {predictedData ? (
                     <>
                       {oldPercentage}% →{" "}
-                      <span className={getColor(percentage, oldPercentage)}>
+                      <span className={`${getColor(percentage, oldPercentage)} whitespace-nowrap`}>
                         {percentage}% {getArrow(percentage, oldPercentage)}
                       </span>
                     </>
@@ -215,7 +217,7 @@ export default function Attendance() {
                   {predictedData ? (
                     <>
                       {oldPresent} →{" "}
-                      <span className={getColor(present, oldPresent)}>
+                      <span className={`${getColor(present, oldPresent)} whitespace-nowrap`}>
                         {present} {getArrow(present, oldPresent)}
                       </span>
                     </>
@@ -224,7 +226,7 @@ export default function Attendance() {
 
               </div>
 
-              {/* ✅ SMART FOOTER FINAL */}
+              {/* FOOTER */}
               <div className="mt-4 flex justify-between items-center">
 
                 {(() => {
@@ -233,11 +235,10 @@ export default function Attendance() {
 
                   if (predictedData) {
 
-                    // SAFE → SAFE
                     if (wasSafe && isSafe) {
                       const diff = margin - oldMargin;
                       return (
-                        <div className="text-green-600 font-bold text-sm md:text-base">
+                        <div className="text-green-600 font-bold text-sm md:text-base whitespace-nowrap">
                           Margin: {oldMargin} → {margin} {diff !== 0 && (
                             <span>
                               {diff > 0 ? "↑" : "↓"} ({diff > 0 ? "+" : ""}{diff})
@@ -247,11 +248,10 @@ export default function Attendance() {
                       );
                     }
 
-                    // SAFE → DANGER
                     if (wasSafe && !isSafe) {
                       const diff = required - oldMargin;
                       return (
-                        <div className="text-red-600 font-bold text-sm md:text-base">
+                        <div className="text-red-600 font-bold text-sm md:text-base whitespace-nowrap">
                           Margin: {oldMargin} → Required: {required}{" "}
                           <span>
                             ↓ ({diff > 0 ? "+" : ""}{diff})
@@ -260,11 +260,10 @@ export default function Attendance() {
                       );
                     }
 
-                    // DANGER → SAFE
                     if (!wasSafe && isSafe) {
                       const diff = margin - oldRequired;
                       return (
-                        <div className="text-green-600 font-bold text-sm md:text-base">
+                        <div className="text-green-600 font-bold text-sm md:text-base whitespace-nowrap">
                           Required: {oldRequired} → Margin: {margin}{" "}
                           <span>
                             ↑ ({diff > 0 ? "+" : ""}{diff})
@@ -273,13 +272,12 @@ export default function Attendance() {
                       );
                     }
 
-                    // DANGER → DANGER
                     if (!wasSafe && !isSafe) {
                       const diff = required - oldRequired;
                       const isBetter = diff < 0;
 
                       return (
-                        <div className={`font-bold text-sm md:text-base ${
+                        <div className={`font-bold text-sm md:text-base whitespace-nowrap ${
                           isBetter ? "text-green-600" : "text-red-600"
                         }`}>
                           Required: {oldRequired} → {required}{" "}
