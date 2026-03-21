@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 import plannerData from "@/data/planner.json";
 import timetableData from "@/data/timetable.json";
 
@@ -9,6 +11,8 @@ import { getOverrides } from "@/lib/storage";
 import { predictAttendance } from "@/lib/predict";
 
 export default function PredictModal({ onClose, data, onApply }) {
+  const router = useRouter();
+
   const [selectedDates, setSelectedDates] = useState([]);
   const [monthIndex, setMonthIndex] = useState(0);
 
@@ -98,167 +102,165 @@ export default function PredictModal({ onClose, data, onApply }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 px-3 pb-24">
 
-      {/* MODAL */}
-      <div className="bg-white w-full max-w-sm rounded-xl max-h-[75vh] flex flex-col">
+      {/* 🔥 WRAPPER FOR BANNER + CARD */}
+      <div className="w-full max-w-sm space-y-2">
 
-        {/* HEADER */}
-        <div className="px-3 py-2 border-b flex justify-between items-center text-sm">
-          <button
-            onClick={() => setMonthIndex((p) => Math.max(0, p - 1))}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
-            >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4 text-gray-700"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-            >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            </button>
+        {/* 🔵 BANNER (OUTSIDE CARD) */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-start justify-between gap-2 text-xs">
 
-          <h2 className="font-semibold">{currentMonthName}</h2>
-
-          <button
-            onClick={() =>
-                setMonthIndex((p) => Math.min(months.length - 1, p + 1))
-            }
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
-            >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4 text-gray-700"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-            >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-            </button>
-        </div>
-
-        {/* BODY (ONLY SCROLL AREA) */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
-
-          {/* CALENDAR */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
-            {["S","M","T","W","T","F","S"].map((d, i) => (
-              <div key={i} className="font-medium text-gray-500">
-                {d}
-              </div>
-            ))}
-
-            {Array.from({ length: firstDayIndex }).map((_, i) => (
-              <div key={i} />
-            ))}
-
-            {monthData.map((d) => {
-              const isPast = d.date < today;
-              const isSelected = selectedDates.includes(d.date);
-              const isHoliday = !d.dayOrder;
-
-              return (
-                <button
-                  key={d.date}
-                  disabled={isHoliday || isPast}
-                  onClick={() => toggleDate(d.date, d.dayOrder)}
-                  className={`p-1 rounded-md flex flex-col items-center
-                    ${isSelected ? "bg-black text-white" : ""}
-                    ${!isSelected && !isHoliday && !isPast ? "bg-gray-100" : ""}
-                    ${isHoliday || isPast ? "opacity-30" : ""}
-                  `}
-                >
-                  <div>{d.date.split("-")[2]}</div>
-                  <div className="text-[9px]">
-                    {d.dayOrder ? `D${d.dayOrder}` : d.holiday ? "H" : "-"}
-                  </div>
-                </button>
-              );
-            })}
+          <div>
+            <p className="font-medium text-blue-800">
+              ⚙️ Using your timetable
+            </p>
+            <p className="text-blue-700 text-[11px]">
+              Update it if your schedule has changed
+            </p>
           </div>
 
-          {/* RESULT */}
-          <div className="bg-gray-50 p-2 rounded-lg">
-            <h3 className="font-medium text-sm mb-2">Prediction</h3>
+          <button
+            onClick={() => router.push("/timetable")}
+            className="shrink-0 bg-blue-600 text-white px-2 py-1 rounded text-[11px]"
+          >
+            Edit
+          </button>
 
-            {result.length === 0 && (
-              <p className="text-xs text-gray-500">Select dates</p>
-            )}
+        </div>
 
-            <div className="space-y-2">
-              {result.map((r) => {
-                const d = getDisplayData(r);
-                const isDanger = d.percentage < 75;
+        {/* MODAL CARD */}
+        <div className="bg-white w-full rounded-xl max-h-[75vh] flex flex-col">
+
+          {/* HEADER */}
+          <div className="px-3 py-2 border-b flex justify-between items-center text-sm">
+            <button
+              onClick={() => setMonthIndex((p) => Math.max(0, p - 1))}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
+            >
+              ←
+            </button>
+
+            <h2 className="font-semibold">{currentMonthName}</h2>
+
+            <button
+              onClick={() =>
+                setMonthIndex((p) => Math.min(months.length - 1, p + 1))
+              }
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
+            >
+              →
+            </button>
+          </div>
+
+          {/* BODY */}
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
+
+            {/* CALENDAR */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
+              {["S","M","T","W","T","F","S"].map((d, i) => (
+                <div key={i} className="font-medium text-gray-500">
+                  {d}
+                </div>
+              ))}
+
+              {Array.from({ length: firstDayIndex }).map((_, i) => (
+                <div key={i} />
+              ))}
+
+              {monthData.map((d) => {
+                const isPast = d.date < today;
+                const isSelected = selectedDates.includes(d.date);
+                const isHoliday = !d.dayOrder;
 
                 return (
-                  <div
-                    key={r.id}
-                    className="bg-white rounded-lg p-2 border flex justify-between text-xs"
+                  <button
+                    key={d.date}
+                    disabled={isHoliday || isPast}
+                    onClick={() => toggleDate(d.date, d.dayOrder)}
+                    className={`p-1 rounded-md flex flex-col items-center
+                      ${isSelected ? "bg-black text-white" : ""}
+                      ${!isSelected && !isHoliday && !isPast ? "bg-gray-100" : ""}
+                      ${isHoliday || isPast ? "opacity-30" : ""}
+                    `}
                   >
-                    <div>
-                      <div className="font-medium flex items-center gap-1">
-                        {d.title}
-                        {r.type === "Practical" && (
-                          <span className="text-[9px] px-1 rounded bg-purple-100 text-purple-700">
-                            PRACTICAL
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-gray-500">
-                        {d.percentage}%
-                      </div>
+                    <div>{d.date.split("-")[2]}</div>
+                    <div className="text-[9px]">
+                      {d.dayOrder ? `D${d.dayOrder}` : d.holiday ? "H" : "-"}
                     </div>
-
-                    <div className="text-right">
-                      {isDanger ? (
-                        <div className="text-red-600 font-medium">
-                          Req: {d.required}
-                        </div>
-                      ) : (
-                        <div className="text-green-600 font-medium">
-                          Mar: {d.margin}
-                        </div>
-                      )}
-
-                      <div
-                        className={`${
-                          d.diff < 0 ? "text-red-500" : "text-green-500"
-                        }`}
-                      >
-                        {d.diff < 0 ? "↓" : "↑"} {Math.abs(d.diff)}%
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
+
+            {/* RESULT */}
+            <div className="bg-gray-50 p-2 rounded-lg">
+              <h3 className="font-medium text-sm mb-2">Prediction</h3>
+
+              {result.length === 0 && (
+                <p className="text-xs text-gray-500">Select dates</p>
+              )}
+
+              <div className="space-y-2">
+                {result.map((r) => {
+                  const d = getDisplayData(r);
+                  const isDanger = d.percentage < 75;
+
+                  return (
+                    <div
+                      key={r.id}
+                      className="bg-white rounded-lg p-2 border flex justify-between text-xs"
+                    >
+                      <div>
+                        <div className="font-medium">{d.title}</div>
+                        <div className="text-gray-500">{d.percentage}%</div>
+                      </div>
+
+                      <div className="text-right">
+                        {isDanger ? (
+                          <div className="text-red-600 font-medium">
+                            Req: {d.required}
+                          </div>
+                        ) : (
+                          <div className="text-green-600 font-medium">
+                            Mar: {d.margin}
+                          </div>
+                        )}
+
+                        <div
+                          className={`${
+                            d.diff < 0 ? "text-red-500" : "text-green-500"
+                          }`}
+                        >
+                          {d.diff < 0 ? "↓" : "↑"} {Math.abs(d.diff)}%
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* FOOTER */}
+          <div className="p-2 border-t flex gap-2">
+            <button
+              onClick={() => {
+                onApply(result);
+                onClose();
+              }}
+              className="flex-1 bg-black text-white py-2 rounded-md text-sm"
+            >
+              Done
+            </button>
+
+            <button
+              onClick={onClose}
+              className="flex-1 border py-2 rounded-md text-sm"
+            >
+              Cancel
+            </button>
           </div>
 
         </div>
-
-        {/* FOOTER */}
-        <div className="p-2 border-t flex gap-2">
-          <button
-            onClick={() => {
-              onApply(result);
-              onClose();
-            }}
-            className="flex-1 bg-black text-white py-2 rounded-md text-sm"
-          >
-            Done
-          </button>
-
-          <button
-            onClick={onClose}
-            className="flex-1 border py-2 rounded-md text-sm"
-          >
-            Cancel
-          </button>
-        </div>
-
       </div>
     </div>
   );
