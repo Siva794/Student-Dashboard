@@ -15,8 +15,6 @@ export default function PredictModal({ onClose, data, onApply }) {
 
   const [selectedDates, setSelectedDates] = useState([]);
   const [monthIndex, setMonthIndex] = useState(0);
-
-  // ✅ dynamic nav height
   const [navHeight, setNavHeight] = useState(0);
 
   const today = getTodayStr();
@@ -35,7 +33,6 @@ export default function PredictModal({ onClose, data, onApply }) {
 
   const overrides = getOverrides();
 
-  // ✅ measure nav WITHOUT modifying it
   useEffect(() => {
     const measure = () => {
       const nav = document.querySelector("div.fixed.bottom-0");
@@ -48,7 +45,6 @@ export default function PredictModal({ onClose, data, onApply }) {
 
     measure();
     window.addEventListener("resize", measure);
-
     return () => window.removeEventListener("resize", measure);
   }, []);
 
@@ -119,20 +115,18 @@ export default function PredictModal({ onClose, data, onApply }) {
     ? new Date(monthData[0].date).getDay()
     : 0;
 
-  const GAP = 12; // visual breathing space
+  const GAP = 12;
 
   return (
     <div
       className="fixed inset-0 bg-black/40 flex justify-center items-start z-50 px-3 pt-6"
       style={{
-        paddingBottom: navHeight + GAP, // ✅ REAL FIX
+        paddingBottom: navHeight + GAP,
       }}
     >
+      <div className="w-full max-w-sm space-y-2 flex flex-col">
 
-      {/* WRAPPER */}
-      <div className="w-full max-w-sm space-y-2 h-full flex flex-col">
-
-        {/* BANNER */}
+        {/* Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-start justify-between gap-2 text-xs">
           <div>
             <p className="font-medium text-blue-800">
@@ -151,10 +145,10 @@ export default function PredictModal({ onClose, data, onApply }) {
           </button>
         </div>
 
-        {/* MODAL CARD */}
-        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden flex-1">
+        {/* Modal */}
+        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden max-h-[75vh]">
 
-          {/* HEADER */}
+          {/* Header */}
           <div className="px-3 py-2 border-b flex justify-between items-center text-sm">
             <button
               onClick={() => setMonthIndex((p) => Math.max(0, p - 1))}
@@ -175,10 +169,10 @@ export default function PredictModal({ onClose, data, onApply }) {
             </button>
           </div>
 
-          {/* BODY */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
+          {/* Body */}
+          <div className="overflow-y-auto px-3 py-2 space-y-2">
 
-            {/* CALENDAR */}
+            {/* Calendar */}
             <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
               {["S","M","T","W","T","F","S"].map((d, i) => (
                 <div key={i} className="font-medium text-gray-500">{d}</div>
@@ -214,8 +208,8 @@ export default function PredictModal({ onClose, data, onApply }) {
               })}
             </div>
 
-            {/* RESULT */}
-            <div className="bg-gray-50 p-2 rounded-lg">
+            {/* Prediction */}
+            <div className="bg-gray-50 p-2 rounded-lg mt-1">
               <h3 className="font-medium text-sm mb-2">Prediction</h3>
 
               {result.length === 0 && (
@@ -228,9 +222,10 @@ export default function PredictModal({ onClose, data, onApply }) {
                   const isDanger = d.percentage < 75;
 
                   return (
-                    <div key={r.id}
-                      className="bg-white rounded-lg p-2 border flex justify-between text-xs">
-
+                    <div
+                      key={r.id}
+                      className="bg-white rounded-lg p-2 border flex justify-between text-xs"
+                    >
                       <div>
                         <div className="font-medium">{d.title}</div>
                         <div className="text-gray-500">{d.percentage}%</div>
@@ -255,7 +250,7 @@ export default function PredictModal({ onClose, data, onApply }) {
 
           </div>
 
-          {/* FOOTER */}
+          {/* Footer */}
           <div className="p-2 border-t flex gap-2 bg-white">
             <button
               onClick={() => { onApply(result); onClose(); }}
