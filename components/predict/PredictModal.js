@@ -100,14 +100,13 @@ export default function PredictModal({ onClose, data, onApply }) {
     : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 px-3 pt-24 pb-24">
+    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 px-3 pb-24">
 
-      {/* 🔥 WRAPPER FOR BANNER + CARD */}
+      {/* WRAPPER */}
       <div className="w-full max-w-sm space-y-2">
 
         {/* 🔵 BANNER (OUTSIDE CARD) */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-start justify-between gap-2 text-xs">
-
           <div>
             <p className="font-medium text-blue-800">
               ⚙️ Using your timetable
@@ -123,7 +122,6 @@ export default function PredictModal({ onClose, data, onApply }) {
           >
             Edit
           </button>
-
         </div>
 
         {/* MODAL CARD */}
