@@ -44,14 +44,11 @@ export default function Attendance() {
 
       {/* HEADER */}
       <div className="flex items-center justify-between mb-4">
-
         <h1 className="text-xl md:text-2xl font-bold">
           Attendance Overview
         </h1>
 
         <div className="flex gap-2">
-
-          {/* 🔁 REVERT */}
           {predictedData && (
             <button
               onClick={() => setPredictedData(null)}
@@ -61,14 +58,12 @@ export default function Attendance() {
             </button>
           )}
 
-          {/* 📅 PREDICT */}
           <button
             onClick={() => setShowPredict(true)}
             className="px-3 py-1.5 text-sm rounded-lg border bg-black text-white hover:bg-gray-800"
           >
             Predict
           </button>
-
         </div>
       </div>
 
@@ -113,22 +108,48 @@ export default function Attendance() {
             type = "warning";
           }
 
+          // ✅ TYPE DETECTION
+          const isTheory =
+            c.category === "Theory" || c.id?.includes("Theory");
+
+          const isPractical =
+            c.category === "Practical" || c.id?.includes("Practical");
+
           return (
             <Card
               key={c.id}
-              className={
-                predictedData
-                  ? "border-2 border-blue-500"
-                  : ""
-              }
+              className={`${
+                predictedData ? "border-2 border-blue-500" : ""
+              }`}
             >
 
-              {/* TITLE */}
-              <h2 className="text-base md:text-lg font-semibold">
-                {c.course_title ?? "Unknown"}
-              </h2>
+              {/* ✅ HEADER WITH BADGE */}
+              <div className="flex items-start justify-between gap-2">
 
-              {/* ✅ FIXED HERE */}
+                <h2 className="text-base md:text-lg font-semibold">
+                  {c.course_title ?? "Unknown"}
+                </h2>
+
+                {/* 🔥 BOTH BADGES */}
+                <div className="flex gap-1">
+
+                  {isTheory && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 font-medium whitespace-nowrap">
+                      THEORY
+                    </span>
+                  )}
+
+                  {isPractical && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500 text-white font-semibold whitespace-nowrap">
+                      PRACTICAL
+                    </span>
+                  )}
+
+                </div>
+
+              </div>
+
+              {/* SUB INFO */}
               <p className="text-xs md:text-sm text-gray-500">
                 {c.code || "N/A"} • {c.category || "N/A"}
               </p>

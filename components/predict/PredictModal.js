@@ -203,7 +203,7 @@ export default function PredictModal({ onClose, data, onApply }) {
                         {d.title}
                         {r.type === "Practical" && (
                           <span className="text-[9px] px-1 rounded bg-purple-100 text-purple-700">
-                            LAB
+                            PRACTICAL
                           </span>
                         )}
                       </div>
