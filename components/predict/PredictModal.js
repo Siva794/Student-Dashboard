@@ -16,6 +16,9 @@ export default function PredictModal({ onClose, data, onApply }) {
   const [selectedDates, setSelectedDates] = useState([]);
   const [monthIndex, setMonthIndex] = useState(0);
 
+  // ✅ dynamic nav height
+  const [navHeight, setNavHeight] = useState(0);
+
   const today = getTodayStr();
   const yearData = plannerData["2026"];
 
@@ -31,6 +34,23 @@ export default function PredictModal({ onClose, data, onApply }) {
     batch === "1" ? timetableData.batch1 : timetableData.batch2;
 
   const overrides = getOverrides();
+
+  // ✅ measure nav WITHOUT modifying it
+  useEffect(() => {
+    const measure = () => {
+      const nav = document.querySelector("div.fixed.bottom-0");
+      if (nav) {
+        const rect = nav.getBoundingClientRect();
+        const visibleHeight = window.innerHeight - rect.top;
+        setNavHeight(visibleHeight);
+      }
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   useEffect(() => {
     const index = months.findIndex((m) =>
@@ -99,11 +119,18 @@ export default function PredictModal({ onClose, data, onApply }) {
     ? new Date(monthData[0].date).getDay()
     : 0;
 
+  const GAP = 12; // visual breathing space
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-start z-50 px-3 pt-6 pb-24">
+    <div
+      className="fixed inset-0 bg-black/40 flex justify-center items-start z-50 px-3 pt-6"
+      style={{
+        paddingBottom: navHeight + GAP, // ✅ REAL FIX
+      }}
+    >
 
       {/* WRAPPER */}
-      <div className="w-full max-w-sm space-y-2">
+      <div className="w-full max-w-sm space-y-2 h-full flex flex-col">
 
         {/* BANNER */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-start justify-between gap-2 text-xs">
@@ -125,13 +152,13 @@ export default function PredictModal({ onClose, data, onApply }) {
         </div>
 
         {/* MODAL CARD */}
-        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden max-h-[calc(100vh-140px)]">
+        <div className="bg-white w-full rounded-xl flex flex-col shadow-lg overflow-hidden flex-1">
 
           {/* HEADER */}
           <div className="px-3 py-2 border-b flex justify-between items-center text-sm">
             <button
               onClick={() => setMonthIndex((p) => Math.max(0, p - 1))}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100"
             >
               ←
             </button>
@@ -142,21 +169,19 @@ export default function PredictModal({ onClose, data, onApply }) {
               onClick={() =>
                 setMonthIndex((p) => Math.min(months.length - 1, p + 1))
               }
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 transition"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100"
             >
               →
             </button>
           </div>
 
-          {/* BODY (SCROLLABLE) */}
+          {/* BODY */}
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
 
             {/* CALENDAR */}
             <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
               {["S","M","T","W","T","F","S"].map((d, i) => (
-                <div key={i} className="font-medium text-gray-500">
-                  {d}
-                </div>
+                <div key={i} className="font-medium text-gray-500">{d}</div>
               ))}
 
               {Array.from({ length: firstDayIndex }).map((_, i) => (
@@ -173,21 +198,11 @@ export default function PredictModal({ onClose, data, onApply }) {
                     key={d.date}
                     disabled={isPast}
                     onClick={() => toggleDate(d.date)}
-                    className={`p-1 rounded-md flex flex-col items-center transition-all duration-150
-
-                      ${isSelected 
-                        ? "bg-black text-white scale-105 ring-2 ring-gray-400 shadow-sm" 
-                        : ""}
-
-                      ${!isSelected && !isPast 
-                        ? "bg-gray-100 hover:bg-gray-200" 
-                        : ""}
-
+                    className={`p-1 rounded-md flex flex-col items-center transition-all
+                      ${isSelected ? "bg-black text-white scale-105 ring-2 ring-gray-400" : ""}
+                      ${!isSelected && !isPast ? "bg-gray-100 hover:bg-gray-200" : ""}
                       ${isPast ? "opacity-30" : ""}
-
-                      ${!isSelected && isHoliday && !isPast 
-                        ? "bg-yellow-100 hover:bg-yellow-200" 
-                        : ""}
+                      ${!isSelected && isHoliday && !isPast ? "bg-yellow-100" : ""}
                     `}
                   >
                     <div>{d.date.split("-")[2]}</div>
@@ -213,10 +228,9 @@ export default function PredictModal({ onClose, data, onApply }) {
                   const isDanger = d.percentage < 75;
 
                   return (
-                    <div
-                      key={r.id}
-                      className="bg-white rounded-lg p-2 border flex justify-between text-xs"
-                    >
+                    <div key={r.id}
+                      className="bg-white rounded-lg p-2 border flex justify-between text-xs">
+
                       <div>
                         <div className="font-medium">{d.title}</div>
                         <div className="text-gray-500">{d.percentage}%</div>
@@ -224,20 +238,12 @@ export default function PredictModal({ onClose, data, onApply }) {
 
                       <div className="text-right">
                         {isDanger ? (
-                          <div className="text-red-600 font-medium">
-                            Req: {d.required}
-                          </div>
+                          <div className="text-red-600">Req: {d.required}</div>
                         ) : (
-                          <div className="text-green-600 font-medium">
-                            Mar: {d.margin}
-                          </div>
+                          <div className="text-green-600">Mar: {d.margin}</div>
                         )}
 
-                        <div
-                          className={`${
-                            d.diff < 0 ? "text-red-500" : "text-green-500"
-                          }`}
-                        >
+                        <div className={`${d.diff < 0 ? "text-red-500" : "text-green-500"}`}>
                           {d.diff < 0 ? "↓" : "↑"} {Math.abs(d.diff)}%
                         </div>
                       </div>
@@ -252,10 +258,7 @@ export default function PredictModal({ onClose, data, onApply }) {
           {/* FOOTER */}
           <div className="p-2 border-t flex gap-2 bg-white">
             <button
-              onClick={() => {
-                onApply(result);
-                onClose();
-              }}
+              onClick={() => { onApply(result); onClose(); }}
               className="flex-1 bg-black text-white py-2 rounded-md text-sm"
             >
               Done
