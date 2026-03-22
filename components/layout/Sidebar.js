@@ -173,7 +173,7 @@ export default function Sidebar() {
         </div>
 
         {/* Links */}
-        <div className="flex flex-col p-3 flex-1 space-y-4">
+        <div className="flex flex-col p-3 flex-1 space-y-4 pt-2">
           <div>
             <p className="text-xs text-gray-400 mb-1">MAIN</p>
             {mainLinks.map(renderLink)}
@@ -186,7 +186,7 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t space-y-2 pb-24 md:pb-3 bg-white">
+        <div className="p-3 border-t space-y-2 pb-20 md:pb-3 bg-white">
 
           <button
             onClick={handleRefresh}
