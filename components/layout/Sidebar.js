@@ -173,7 +173,7 @@ export default function Sidebar() {
         </div>
 
         {/* Links */}
-        <div className="flex flex-col p-3 flex-1 space-y-4 pt-2">
+        <div className="flex flex-col p-3 flex-1 space-y-4 pt-6">
           <div>
             <p className="text-xs text-gray-400 mb-1">MAIN</p>
             {mainLinks.map(renderLink)}
