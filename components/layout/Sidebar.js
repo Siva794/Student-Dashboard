@@ -186,7 +186,7 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t space-y-2">
+        <div className="p-3 border-t space-y-2 pb-24 md:pb-3 bg-white">
 
           <button
             onClick={handleRefresh}
